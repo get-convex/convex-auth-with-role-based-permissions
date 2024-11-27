@@ -1,4 +1,4 @@
-# Welcome to your Convex + React (Vite) + Convex Auth app
+# Welcome to your Convex + React (Vite) + Convex Auth app with role-based permissions
 
 This is a [Convex](https://convex.dev/) project created with [`npm create convex`](https://www.npmjs.com/package/create-convex).
 
@@ -9,6 +9,76 @@ After the initial setup (<2 minutes) you'll have a working full-stack app using:
 - [React](https://react.dev/) as your frontend (web page interactivity)
 - [Vite](https://vitest.dev/) for optimized web hosting
 - [Tailwind](https://tailwindcss.com/) and [shadcn/ui](https://ui.shadcn.com/) for building great looking accessible UI fast
+
+## Role Based Permissions
+
+This project implements a hierarchical role-based permission system that controls access to different features of the application. The system is built using Convex and consists of three permission levels:
+
+- **READ**: Basic access level - can view messages
+- **WRITE**: Intermediate access - can view and send messages
+- **ADMIN**: Full access - can view, send, and delete messages
+
+### Implementation Details
+
+The permission system is implemented across several files:
+
+#### 1. Schema Definition (`schema.ts`)
+
+```typescript
+users: defineTable({
+  // ... other fields ...
+  role: v.optional(
+    v.union(v.literal("read"), v.literal("write"), v.literal("admin")),
+  ),
+});
+```
+
+#### 2. Permission Management (`lib/permissions.ts`)
+
+The permissions system uses a numeric hierarchy to determine access levels:
+
+```typescript
+const roleHierarchy = {
+  read: 0,
+  write: 1,
+  admin: 2,
+};
+```
+
+#### 3. Authentication Integration (`auth.ts`)
+
+New users are automatically assigned the READ role upon registration:
+
+```typescript
+async afterUserCreatedOrUpdated(ctx, args) {
+  if (args.existingUserId) return;
+  await ctx.db.patch(args.userId, {
+    role: VALID_ROLES.READ,
+  });
+}
+```
+
+#### 4. Usage Example (`messages.ts`)
+
+The permission system controls access to different operations:
+
+```typescript
+// Reading messages requires READ access
+const hasAccess = await checkPermission(ctx, userId, VALID_ROLES.READ);
+
+// Sending messages requires WRITE access
+const hasAccess = await checkPermission(ctx, userId, VALID_ROLES.WRITE);
+
+// Deleting messages requires ADMIN access
+const hasAccess = await checkPermission(ctx, userId, VALID_ROLES.ADMIN);
+```
+
+### Security Considerations
+
+- Role checks are performed server-side in Convex functions
+- Role updates should be restricted to administrators in production
+- The permission system is integrated with the authentication system
+- Invalid or missing roles default to no access
 
 ## Get started
 
