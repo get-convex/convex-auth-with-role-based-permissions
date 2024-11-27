@@ -9,11 +9,6 @@ export default defineSchema({
    * New fields must be optional if all of the OAuth providers don't return them
    */
   users: defineTable({
-    /*
-     * we use the tokenIdentifier to fetch a user's role, because the document _id of
-     * the user in Convex may change (if the user is deleted and re-created, for example)
-     * while the tokenIdentifier is constant for the same user across OAuth providers
-     */
     name: v.optional(v.string()),
     image: v.optional(v.string()),
     email: v.optional(v.string()),
